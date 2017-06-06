@@ -26,6 +26,8 @@ def latest_jdk
   latest_for 'https://java-buildpack.cloudfoundry.org/openjdk-jdk/trusty/x86_64/index.yml', 'jdk'
 end
 
+Dir.chdir File.dirname(__FILE__) + "/.."
+
 jre_url = latest_jre
 jdk_url = latest_jdk
 jre_filename = File.basename(URI(jre_url).path)
@@ -36,9 +38,15 @@ pre_packaging_script = File.read(pre_packaging_script_path)
 File.open(pre_packaging_script_path, 'w') do |f|
   f.print pre_packaging_script.sub(/JDK_URL="[^"]+"/, "JDK_URL=\"#{jdk_url}\"")
 end
+puts "writing jdk location"
+File.open('.jdk-location', 'w') do |f|
+  f.print("#{jdk_url}")
+end
 
 # Download current JRE
 FileUtils.mkdir_p("blobs/openjdk_1.8.0")
+puts "Downloading jre to #{jre_filename}"
+puts "running: cd blobs/openjdk_1.8.0 && curl \"#{jre_url}\" -o \"#{jre_filename}\""
 system "cd blobs/openjdk_1.8.0 && curl \"#{jre_url}\" -o \"#{jre_filename}\""
 
 # Update blobs/openjdk_1.8.0/spec
