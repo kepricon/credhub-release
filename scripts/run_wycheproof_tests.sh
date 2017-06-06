@@ -8,7 +8,7 @@ JDK_LOCATION=`cat /credhub-release/.jdk-location`
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-i386
 
 mkdir -p ${JAVA_HOME}
-curl -L ${JDK_LOCATION} ${JAVA_HOME}/jdk.tar.gz
+curl -L ${JDK_LOCATION} -o ${JAVA_HOME}/jdk.tar.gz
 pushd ${JAVA_HOME}
   tar zxvf jdk.tar.gz
 popd
