@@ -11,6 +11,9 @@ mkdir -p ${JAVA_HOME}
 curl -L ${JDK_LOCATION} -o ${JAVA_HOME}/jdk.tar.gz
 pushd ${JAVA_HOME}
   tar zxvf jdk.tar.gz
+  wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip
+  unzip jce_policy-8.zip
+  mv UnlimitedJCEPolicyJDK8/*.jar jre/lib/security/
 popd
 export PATH=${JAVA_HOME}/bin:$PATH
 
