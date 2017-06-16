@@ -21,14 +21,65 @@ chmod 600 /var/vcap/jobs/credhub/config/*
 %>
 
 if [ `grep KEY_STORE_PASSWORD_PLACEHOLDER /var/vcap/jobs/credhub/config/application.yml | wc -l` -eq 0 ]; then
-  echo "Key store appears to be initialized. Skipping key store and cert initialization."
+echo "Key store appears to be initialized. Skipping key store and cert initialization."
 else
-  echo "Key store appears to be uninitialized. Setting up key store and installing certs."
-  /var/vcap/jobs/credhub/bin/init_key_stores.sh
+echo "Key store appears to be uninitialized. Setting up key store and installing certs."
+/var/vcap/jobs/credhub/bin/init_key_stores.sh
 fi
 
 <% if active_provider['type'] == 'hsm' %>
-/var/vcap/jobs/credhub/bin/configure_hsm.sh
+  /var/vcap/jobs/credhub/bin/configure_hsm.sh
 <% end %>
+
+WHEN_FINISH=`mktemp --tmpdir=/tmp when-finishXXXXXX.timestamp`
+WHEN_NOW=`mktemp --tmpdir=/tmp when-nowXXXXXX.timestamp`
+scriptName=credhub-pre-start
+
+<%=
+  bootstrap_instance = if_link("credhub-ha") do |peer|
+    peer.instances.select do |instance|
+      {
+          instance.bootstrap
+      }
+    end
+  end
+  bootstrap_ip = bootstrap_instance.address
+%>
+
+health_check() {
+json=`curl -k --silent https://<%=bootstrap_ip%>:<%= p("credhub.port") %>/health`
+if [ $? -ne 0 ]; then
+  echo "Could not curl the credhub server"
+  return 1
+fi
+[ `echo $json | grep '"status":"UP"' | wc -l` -eq 1 ];
+}
+
+delete_timestamp_files() {
+rm -f $WHEN_FINISH
+rm -f $WHEN_NOW
+echo "$scriptName - cleaned up timestamp files"
+}
+
+touch -d "600 seconds" $WHEN_FINISH
+touch $WHEN_NOW
+EXPIRATION=`ls -la --full-time $WHEN_FINISH |awk '{print $6 " " $7}'`
+echo "$scriptName - performing post start healthcheck until $EXPIRATION"
+
+while [ $WHEN_NOW -ot $WHEN_FINISH ]; do
+  health_check
+  if [ $? == 0 ]
+  then
+  delete_timestamp_files
+  echo "$scriptName - post start health check successful"
+  exit 0
+fi
+sleep 1
+touch $WHEN_NOW
+done
+echo "$scriptName - pre start health check failed"
+delete_timestamp_files
+exit 1
+
 
 echo 'pre-start finished!'

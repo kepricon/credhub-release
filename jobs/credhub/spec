@@ -1,5 +1,14 @@
 ---
 name: credhub
+
+consumes:
+- name: credhub-ha
+  type: credhub_peers
+
+provides:
+- name: credhub-ha
+  type: credhub_peers
+
 templates:
   # Lifecycle scripts
   pre-start.erb: bin/pre-start

@@ -119,6 +119,8 @@
     'enabled' => !!spec.bootstrap
   }
 
+  application_config['bootstrap'] = !!spec.bootstrap
+
   # Encryption Config
 
   encryption_keys = p('credhub.encryption.keys').to_a
