@@ -33,6 +33,8 @@ export PGSSLROOTCERT=/var/vcap/jobs/credhub/config/database_ca.pem
   --clean \
   --dbname="<%= dbname %>" "${BBR_ARTIFACT_DIRECTORY}/credhubdb_dump"
 
+monit restart credhub
+
 <% elsif dbtype == "mysql" %>
     export MYSQLUTILS_DIR=/var/vcap/packages/database-backup-restorer-mysql
     export MYSQL_PWD="<%= dbpassword %>"
@@ -51,6 +53,7 @@ if require_tls %>
 -P "<%= dbport %>" \
 "<%= dbname %>" < "${BBR_ARTIFACT_DIRECTORY}/credhubdb_dump"
 <% end %>
+monit restart credhub
 <% end %>
 
 <% else %>
