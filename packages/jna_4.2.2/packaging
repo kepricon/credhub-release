@@ -1,0 +1,9 @@
+set -ex
+
+pushd ${BOSH_COMPILE_TARGET}/jna_4.2.2/
+  tar xfz jna-4.2.2.tar.gz
+
+  pushd jna-4.2.2/dist/
+    unzip linux-x86-64.jar -d ${BOSH_INSTALL_TARGET}
+  popd
+popd

@@ -31,4 +31,7 @@ fi
 /var/vcap/jobs/credhub/bin/configure_hsm.sh
 <% end %>
 
+cp /var/vcap/packages/jna_4.2.2/libjnidispatch.so /var/vcap/jobs/credhub/
+chmod +x /var/vcap/jobs/credhub/libjnidispatch.so
+
 echo 'pre-start finished!'
