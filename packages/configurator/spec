@@ -1,0 +1,6 @@
+---
+name: configurator
+dependencies:
+- golang
+files:
+- configurator/*/**

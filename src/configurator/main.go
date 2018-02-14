@@ -10,15 +10,21 @@ import (
 )
 
 func main() {
+
 	fileInfo, err := os.Stdin.Stat()
-	if err != nil {
-		panic(err)
-	}
 
 	if fileInfo.Size() == 0 {
 		fmt.Fprintln(os.Stderr, "Usage: configurator <config-json>")
 		os.Exit(1)
 	}
+
+	//fileInfo, err := ioutil.ReadFile("/tmp/application.json")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//fmt.Printf("%s", text)
+
 
 	var boshConfig config.BoshConfig
 	if err := json.NewDecoder(os.Stdin).Decode(&boshConfig); err != nil {
@@ -27,6 +33,7 @@ func main() {
 
 	port, err := boshConfig.Port.Int64()
 	if err != nil {
+		fmt.printf(port)
 		panic(err)
 	}
 	credhubConfig := config.NewDefaultCredhubConfig()

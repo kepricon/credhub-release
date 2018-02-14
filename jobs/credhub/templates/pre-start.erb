@@ -3,6 +3,9 @@
 <% using_hsm = p('credhub.encryption.providers').any? { |provider| provider['type'] == "hsm" } %>
 <% port = p('credhub.port') %>
 
+  go build
+  echo /var/vcap/jobs/credhub/configurator/config.json | (wherever configurator lives) > /var/vcap/jobs/credhub/configapplication.yml
+
 <%
   begin
     p('credhub.tls.certificate')
