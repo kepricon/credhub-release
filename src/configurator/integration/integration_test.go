@@ -190,9 +190,29 @@ var _ = Describe("Configurator", func() {
 
 	Describe("encryption keys", func() {
 		It("populates their type by mapping from the provider", func() {
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+				},
+			}
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					EncryptionPassword: "bar",
+					EncryptionKeyName:  "baz",
+				},
+			}
 
+			result := runCli(cli)
+			Expect(result.Encryption.Keys).To(HaveLen(1))
+			Expect(result.Encryption.Keys[0].ProviderType).To(Equal("hsm"))
+			Expect(result.Encryption.Keys[0].EncryptionPassword).To(Equal("bar"))
+			Expect(result.Encryption.Keys[0].EncryptionKeyName).To(Equal("baz"))
 		})
+
 	})
+
 })
 
 func runCli(cli *ConfiguratorCLI) config.CredhubConfig {

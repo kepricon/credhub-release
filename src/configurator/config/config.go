@@ -62,23 +62,28 @@ type BoshConfig struct {
 	}
 	Encryption struct {
 		Keys      []BoshKey
-		Providers []struct {
-			Type              string
-			Partition         string // deprecated
-			PartitionPassword string // deprecated
-
-			ConnectionProperties struct {
-				Partition         string
-				PartitionPassword string
-			}
-		}
+		Providers []BoshProvider
 	}
 	Bootstrap bool
 }
 
 type BoshKey struct {
-	ProviderName string
-	Active       bool
+	ProviderName       string
+	Active             bool
+	EncryptionKeyName  string
+	EncryptionPassword string
+}
+
+type BoshProvider struct {
+	Name              string
+	Type              string
+	Partition         string // deprecated
+	PartitionPassword string // deprecated
+
+	ConnectionProperties struct {
+		Partition         string
+		PartitionPassword string
+	}
 }
 
 type CredhubConfig struct {
@@ -112,12 +117,24 @@ type CredhubConfig struct {
 	Encryption struct {
 		KeyCreationEnabled bool `yaml:"key_creation_enabled"`
 
-		Keys []struct {
-			ProviderType       string `yaml:"provider_type"`
-			EncryptionPassword string `yaml:"encryption_password,omitempty"`
-			EncryptionKeyName  string `yaml:"encryption_key_name,omitempty"`
-		}
+		Keys []Key
 	}
+
+	Hsm struct {
+		Partition         string `yaml:"partition,omitempty"`
+		PartitionPassword string `yaml:"partition_password,omitempty"`
+	}
+
+	Logging struct {
+		Config string
+	}
+}
+
+type Key struct {
+	ProviderType       string `yaml:"provider_type"`
+	EncryptionPassword string `yaml:"encryption_password,omitempty"`
+	EncryptionKeyName  string `yaml:"encryption_key_name,omitempty"`
+	Active             bool   `yaml:"active"`
 }
 
 type SSLConfig struct {
@@ -161,6 +178,7 @@ func NewDefaultCredhubConfig() CredhubConfig {
 	}
 
 	config.Spring.JPA.Hibernate.DDLAuto = "validate"
+	config.Logging.Config = ConfigPath + "log4j2.properties"
 
 	return config
 }

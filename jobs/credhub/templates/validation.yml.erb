@@ -1,0 +1,55 @@
+<%=
+
+   if datastorage_type == 'postgres' || datastorage_type == 'mysql'
+    if_p('credhub.data_storage.require_tls') do |require_tls|
+      if !is_boolean(require_tls)
+        raise 'credhub.data_storage.require_tls must be set to `true` or `false`.'
+      end
+    end
+  elsif datastorage_type != 'in-memory'
+    raise 'credhub.data_storage.type must be set to "mysql", "postgres", or "in-memory".'
+  end
+
+
+  # Encryption Config
+
+  encryption_keys = p('credhub.encryption.keys').to_a
+  encryption_providers = p('credhub.encryption.providers').to_a
+  active_keys = encryption_keys.select {|key| key['active']}
+
+  if active_keys.empty? || active_keys.size > 1
+    raise 'Exactly one encryption key must be marked as active in the deployment manifest. Please update your configuration to proceed.'
+  end
+
+  provider_types = encryption_providers.collect{|p| p['type']}.uniq
+
+  if provider_types.any? { |p| !['internal', 'hsm'].include?(p) }
+    raise 'The provided encryption provider type is not valid. Valid provider types are "hsm" and "internal".'
+  end
+
+  hsm_providers = encryption_providers.select{|p| p['type'] == 'hsm'}
+
+  if hsm_providers.size > 1
+    raise 'More than one hsm provider is not supported. Please update your configuration to proceed.'
+  end
+
+  keys = encryption_keys.each do |k|
+
+    if k.key?('encryption_password')
+      if k['encryption_password'].nil? || k['encryption_password'].empty?
+        raise 'credhub.encryption.encryption_password is not valid (must not be empty if provided).'
+      end
+
+      if k['encryption_password'].length < 20
+        raise 'The encryption_password value must be at least 20 characters in length. Please update and redeploy.'
+      end
+    end
+
+    if k.key?('dev_key')
+      raise 'The key `dev_key` is not supported. You must rotate to using an `encryption_password` prior to upgrading to this version.'
+    end
+  end
+
+
+
+%>

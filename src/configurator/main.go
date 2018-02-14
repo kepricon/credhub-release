@@ -57,6 +57,23 @@ func main() {
 		credhubConfig.Flyway.Enabled = true
 	}
 
+	for _, key := range boshConfig.Encryption.Keys {
+		var matchingProvider config.BoshProvider
+
+		for _, provider := range boshConfig.Encryption.Providers {
+			if provider.Name == key.ProviderName {
+				matchingProvider = provider
+			}
+		}
+
+		credhubConfig.Encryption.Keys = append(credhubConfig.Encryption.Keys, config.Key{
+			ProviderType:       matchingProvider.Type,
+			EncryptionKeyName:  key.EncryptionKeyName,
+			EncryptionPassword: key.EncryptionPassword,
+			Active:             key.Active,
+		})
+	}
+
 	switch boshConfig.DataStorage.Type {
 	case "in-memory":
 		credhubConfig.Flyway.Locations = config.H2MigrationsPath
@@ -65,6 +82,8 @@ func main() {
 		connectionString := config.MysqlConnectionString
 		if boshConfig.DataStorage.RequireTLS {
 			connectionString = config.MysqlTlsConnectionString
+		} else {
+			fmt.Fprintln(os.Stderr, `credhub.data_storage.require_tls must be set to "true" or "false".`)
 		}
 		credhubConfig.Spring.Datasource.URL = fmt.Sprintf(connectionString,
 			boshConfig.DataStorage.Host, boshConfig.DataStorage.Port, boshConfig.DataStorage.Database)
@@ -75,6 +94,8 @@ func main() {
 		connectionString := config.PostgresConnectionString
 		if boshConfig.DataStorage.RequireTLS {
 			connectionString = config.PostgresTlsConnectionString
+		} else {
+			fmt.Fprintln(os.Stderr, `credhub.data_storage.require_tls must be set to "true" or "false".`)
 		}
 		credhubConfig.Spring.Datasource.URL = fmt.Sprintf(connectionString,
 			boshConfig.DataStorage.Host, boshConfig.DataStorage.Port, boshConfig.DataStorage.Database)
