@@ -43,7 +43,7 @@ type BoshConfig struct {
 		UAA struct {
 			Enabled     bool
 			Url         string
-			InternalUrl string
+			InternalUrl string `json:"internal_url"`
 		}
 	}
 	Authorization struct {
@@ -59,7 +59,7 @@ type BoshConfig struct {
 		Password   string
 		Port       json.Number
 		RequireTLS bool `json:"require_tls"`
-	}
+	} `json:"data_storage"`
 	Encryption struct {
 		Keys      []BoshKey
 		Providers []BoshProvider
@@ -68,22 +68,22 @@ type BoshConfig struct {
 }
 
 type BoshKey struct {
-	ProviderName       string
+	ProviderName       string  `json:"provider_name"`
 	Active             bool
-	EncryptionKeyName  string
-	EncryptionPassword string
+	EncryptionKeyName  string `json:"encryption_key_name"`
+	EncryptionPassword string `json:"encryption_password""`
 }
 
 type BoshProvider struct {
 	Name              string
 	Type              string
 	Partition         string // deprecated
-	PartitionPassword string // deprecated
+	PartitionPassword string `json:"partition_password"`// deprecated
 
 	ConnectionProperties struct {
 		Partition         string
-		PartitionPassword string
-	}
+		PartitionPassword string `json:"partition_password"`
+	} `json:"connection_properties"`
 }
 
 type CredhubConfig struct {
@@ -178,7 +178,7 @@ func NewDefaultCredhubConfig() CredhubConfig {
 	}
 
 	config.Spring.JPA.Hibernate.DDLAuto = "validate"
-	config.Logging.Config = ConfigPath + "log4j2.properties"
+	config.Logging.Config = ConfigPath + "/log4j2.properties"
 
 	return config
 }

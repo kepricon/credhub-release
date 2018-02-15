@@ -1,5 +1,11 @@
 <%=
 
+  def is_boolean(x)
+    !!x == x
+  end
+
+   datastorage_type = p('credhub.data_storage.type')
+
    if datastorage_type == 'postgres' || datastorage_type == 'mysql'
     if_p('credhub.data_storage.require_tls') do |require_tls|
       if !is_boolean(require_tls)

@@ -5,35 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
 
 func main() {
 
-	fileInfo, err := os.Stdin.Stat()
-
-	if fileInfo.Size() == 0 {
-		fmt.Fprintln(os.Stderr, "Usage: configurator <config-json>")
-		os.Exit(1)
+	fileInfo, err := ioutil.ReadFile("/var/vcap/jobs/credhub/config/config.json")
+	if err != nil {
+		panic(err)
 	}
-
-	//fileInfo, err := ioutil.ReadFile("/tmp/application.json")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//fmt.Printf("%s", text)
 
 
 	var boshConfig config.BoshConfig
-	if err := json.NewDecoder(os.Stdin).Decode(&boshConfig); err != nil {
+	if err := json.Unmarshal(fileInfo, &boshConfig); err != nil {
 		panic(err)
 	}
 
 	port, err := boshConfig.Port.Int64()
 	if err != nil {
-		fmt.printf(port)
 		panic(err)
 	}
 	credhubConfig := config.NewDefaultCredhubConfig()
@@ -89,8 +80,6 @@ func main() {
 		connectionString := config.MysqlConnectionString
 		if boshConfig.DataStorage.RequireTLS {
 			connectionString = config.MysqlTlsConnectionString
-		} else {
-			fmt.Fprintln(os.Stderr, `credhub.data_storage.require_tls must be set to "true" or "false".`)
 		}
 		credhubConfig.Spring.Datasource.URL = fmt.Sprintf(connectionString,
 			boshConfig.DataStorage.Host, boshConfig.DataStorage.Port, boshConfig.DataStorage.Database)
@@ -101,8 +90,6 @@ func main() {
 		connectionString := config.PostgresConnectionString
 		if boshConfig.DataStorage.RequireTLS {
 			connectionString = config.PostgresTlsConnectionString
-		} else {
-			fmt.Fprintln(os.Stderr, `credhub.data_storage.require_tls must be set to "true" or "false".`)
 		}
 		credhubConfig.Spring.Datasource.URL = fmt.Sprintf(connectionString,
 			boshConfig.DataStorage.Host, boshConfig.DataStorage.Port, boshConfig.DataStorage.Database)
@@ -112,6 +99,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, `credhub.data_storage.type must be set to "mysql", "postgres", or "in-memory".`)
 		os.Exit(1)
 	}
+
 
 	byteArray, err := yaml.Marshal(credhubConfig)
 	if err != nil {
