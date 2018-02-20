@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 
 	"bytes"
+	//"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -195,6 +196,10 @@ var _ = Describe("Configurator", func() {
 					Name: "foo",
 					Type: "hsm",
 				},
+				{
+					Name: "notfoo",
+					Type: "internal",
+				},
 			}
 			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
 				{
@@ -211,6 +216,159 @@ var _ = Describe("Configurator", func() {
 			Expect(result.Encryption.Keys[0].EncryptionKeyName).To(Equal("baz"))
 		})
 
+		It("populates encryption password when key properties is not available", func () {
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+				},
+				{
+					Name: "notfoo",
+					Type: "internal",
+				},
+			}
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "notfoo",
+					EncryptionPassword: "bar",
+				},
+			}
+
+			result := runCli(cli)
+			Expect(result.Encryption.Keys).To(HaveLen(1))
+			Expect(result.Encryption.Keys[0].ProviderType).To(Equal("internal"))
+			Expect(result.Encryption.Keys[0].EncryptionPassword).To(Equal("bar"))
+		})
+
+		It("populates encryption key name when key properties is not available", func () {
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+				},
+				{
+					Name: "notfoo",
+					Type: "internal",
+				},
+			}
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					EncryptionKeyName: "bar",
+				},
+			}
+
+			result := runCli(cli)
+			Expect(result.Encryption.Keys).To(HaveLen(1))
+			Expect(result.Encryption.Keys[0].ProviderType).To(Equal("hsm"))
+			Expect(result.Encryption.Keys[0].EncryptionKeyName).To(Equal("bar"))
+		})
+
+		It("populates encryption password when key properties is available", func () {
+
+			keyProperties := config.KeyProperties {
+				EncryptionPassword: "bar",
+			}
+
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "internal",
+				},
+			}
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					KeyProperties: keyProperties,
+				},
+			}
+
+			result := runCli(cli)
+			Expect(result.Encryption.Keys).To(HaveLen(1))
+			Expect(result.Encryption.Keys[0].ProviderType).To(Equal("internal"))
+			Expect(result.Encryption.Keys[0].EncryptionPassword).To(Equal("bar"))
+		})
+
+		It("populates encryption key name when key properties is available", func () {
+			keyProperties := config.KeyProperties {
+				EncryptionKeyName: "bar",
+			}
+
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+				},
+			}
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					KeyProperties: keyProperties,
+				},
+			}
+
+			result := runCli(cli)
+			Expect(result.Encryption.Keys).To(HaveLen(1))
+			Expect(result.Encryption.Keys[0].ProviderType).To(Equal("hsm"))
+			Expect(result.Encryption.Keys[0].EncryptionPassword).To(Equal("bar"))
+		})
+
+	})
+
+	Describe("providers", func () {
+		It("populates partition and partition password when connection properties is not available", func () {
+
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+					Partition: "some-partition",
+					PartitionPassword: "some-partition-password",
+				},
+			}
+
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					EncryptionPassword: "bar",
+					EncryptionKeyName:  "baz",
+				},
+			}
+
+
+			result := runCli(cli)
+			Expect(result.Hsm.Partition).To(Equal("some-partition"))
+			Expect(result.Hsm.PartitionPassword).To(Equal("some-partition-password"))
+		})
+
+		It("populates partition and partition password when connection properties is available", func () {
+
+			connectionProperties := config.ConnectionProperties{
+				Partition:                "connection-some-partition",
+				PartitionPassword:        "connection-some-partition-password",
+			}
+
+			cli.BoshConfig.Encryption.Providers = []config.BoshProvider{
+				{
+					Name: "foo",
+					Type: "hsm",
+					ConnectionProperties: connectionProperties,
+				},
+			}
+
+			cli.BoshConfig.Encryption.Keys = []config.BoshKey{
+				{
+					ProviderName:       "foo",
+					EncryptionPassword: "bar",
+					EncryptionKeyName:  "baz",
+				},
+			}
+
+
+			result := runCli(cli)
+			Expect(result.Hsm.Partition).To(Equal("connection-some-partition"))
+			Expect(result.Hsm.PartitionPassword).To(Equal("connection-some-partition-password"))
+		})
 	})
 
 })

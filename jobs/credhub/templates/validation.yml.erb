@@ -35,8 +35,17 @@
 
   hsm_providers = encryption_providers.select{|p| p['type'] == 'hsm'}
 
+  ##get array of provider names
+
   if hsm_providers.size > 1
     raise 'More than one hsm provider is not supported. Please update your configuration to proceed.'
+  end
+
+  providers = encryption_providers.each do |p|
+
+      if p.key?('connection_properties') && (p.key?('partition') || p.key?('partition_password'))
+        raise '`partition` and `partition_password` cannot be provided both through `connection_properties` and directly'
+      end
   end
 
   keys = encryption_keys.each do |k|
@@ -51,11 +60,12 @@
       end
     end
 
+    #if key provider name isn't in list of provider names throw an error
+
     if k.key?('dev_key')
       raise 'The key `dev_key` is not supported. You must rotate to using an `encryption_password` prior to upgrading to this version.'
     end
   end
-
 
 
 %>

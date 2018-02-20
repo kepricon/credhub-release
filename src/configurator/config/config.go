@@ -70,6 +70,12 @@ type BoshConfig struct {
 type BoshKey struct {
 	ProviderName       string  `json:"provider_name"`
 	Active             bool
+	EncryptionKeyName  string `json:"encryption_key_name"` //deprecated
+	EncryptionPassword string `json:"encryption_password""`//deprecated
+	KeyProperties KeyProperties `json: "key_properties"`
+}
+
+type KeyProperties struct {
 	EncryptionKeyName  string `json:"encryption_key_name"`
 	EncryptionPassword string `json:"encryption_password""`
 }
@@ -79,11 +85,12 @@ type BoshProvider struct {
 	Type              string
 	Partition         string // deprecated
 	PartitionPassword string `json:"partition_password"`// deprecated
+	ConnectionProperties ConnectionProperties `json:"connection_properties"`
+}
 
-	ConnectionProperties struct {
-		Partition         string
-		PartitionPassword string `json:"partition_password"`
-	} `json:"connection_properties"`
+type ConnectionProperties struct {
+	Partition         string
+	PartitionPassword string `json:"partition_password"`
 }
 
 type CredhubConfig struct {

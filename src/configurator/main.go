@@ -5,23 +5,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"io/ioutil"
+	//"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
 
 func main() {
 
-	fileInfo, err := ioutil.ReadFile("/var/vcap/jobs/credhub/config/config.json")
+	_ := config.BoshConfig{}
+	//fileInfo, err := ioutil.ReadFile("/var/vcap/jobs/credhub/config/config.json")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//
+	//var boshConfig config.BoshConfig
+	//if err := json.Unmarshal(fileInfo, &boshConfig); err != nil {
+	//	panic(err)
+	//}
+
+	fileInfo, err := os.Stdin.Stat()
 	if err != nil {
 		panic(err)
 	}
 
+	if fileInfo.Size() == 0 {
+		fmt.Fprintln(os.Stderr, "Usage: configurator <config-json>")
+		os.Exit(1)
+	}
 
 	var boshConfig config.BoshConfig
-	if err := json.Unmarshal(fileInfo, &boshConfig); err != nil {
+	if err := json.NewDecoder(os.Stdin).Decode(&boshConfig); err != nil {
 		panic(err)
 	}
+
 
 	port, err := boshConfig.Port.Int64()
 	if err != nil {
@@ -56,20 +73,47 @@ func main() {
 	}
 
 	for _, key := range boshConfig.Encryption.Keys {
-		var matchingProvider config.BoshProvider
+		var providerType string
+
 
 		for _, provider := range boshConfig.Encryption.Providers {
 			if provider.Name == key.ProviderName {
-				matchingProvider = provider
+				providerType = provider.Type
+
+				if provider.Type == "hsm" {
+					if provider.ConnectionProperties.Partition != "" && provider.ConnectionProperties.PartitionPassword != "" {
+						credhubConfig.Hsm.Partition = provider.ConnectionProperties.Partition
+						credhubConfig.Hsm.PartitionPassword = provider.ConnectionProperties.PartitionPassword
+					} else {
+						credhubConfig.Hsm.Partition = provider.Partition
+						credhubConfig.Hsm.PartitionPassword = provider.PartitionPassword
+					}
+				}
+				break
 			}
+
 		}
 
-		credhubConfig.Encryption.Keys = append(credhubConfig.Encryption.Keys, config.Key{
-			ProviderType:       matchingProvider.Type,
-			EncryptionKeyName:  key.EncryptionKeyName,
-			EncryptionPassword: key.EncryptionPassword,
+		//var encryptionKeyName string
+		//var encryptionKeyPassword string
+		//if key.KeyProperties.EncryptionKeyName != "" && KeyProperties.EncryptionPassword != "" {
+		//	encryptionKeyName = key.EncryptionKeyName
+		//	encryptionKeyPassword = key.EncryptionKeyPassword
+		//}  else {
+		//	encryptionKeyName = key.KeyProperties.EncryptionKeyName
+		//	encrypionKeyPassword = key.KeyProperties.EncryptionKeyPassword
+		//}
+		//
+		key := config.Key {
+			ProviderType:       providerType,
+			EncryptionKeyName:  encryptionKeyName,
+			EncryptionPassword: encryptionKeyPassword,
 			Active:             key.Active,
-		})
+		}
+		//
+		//credhubConfig.Encryption.Keys = append(credhubConfig.Encryption.Keys, key)
+
+
 	}
 
 	switch boshConfig.DataStorage.Type {
