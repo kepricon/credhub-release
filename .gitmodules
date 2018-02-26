@@ -1,0 +1,3 @@
+[submodule "src/credhub"]
+	path = src/credhub
+	url = https://github.com/kepricon/credhub.git
