@@ -1,3 +1,0 @@
-[submodule "src/credhub"]
-	path = src/credhub
-	url = https://github.com/cloudfoundry-incubator/credhub.git
